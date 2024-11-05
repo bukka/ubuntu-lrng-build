@@ -1,0 +1,9 @@
+Types: deb-src
+URIs: http://archive.ubuntu.com/ubuntu
+Suites: noble
+Components: main
+
+Types: deb-src
+URIs: http://archive.ubuntu.com/ubuntu
+Suites: noble-updates
+Components: main
