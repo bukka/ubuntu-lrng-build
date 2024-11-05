@@ -17,6 +17,8 @@ sudo apt upgrade -y
 
 sudo apt build-dep -y linux linux-image-unsigned-$(uname -r)
 
+# currently linux-cloud-tools-common install Hyper-V KVP Protocol Daemon which delays build due to the bug
+# - https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1820063
 sudo apt install -y linux-cloud-tools-common wireless-regdb libncurses-dev gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf llvm fakeroot
 
 # fetch lrng patches
@@ -24,7 +26,8 @@ git clone https://github.com/smuellerDD/lrng.git
 # move cover latter to prevent failure
 mv lrng/kernel_patches/v6.8/v54-0000-cover-letter.patch lrng/kernel_patches/v6.8/XXXXv54-0000-cover-letter.patch
 
-git clone git://git.launchpad.net/~canonical-kernel/ubuntu/+source/linux-aws/+git/noble linux-aws/noble
+# clone latest linux-aws source
+git clone --depth 1 --branch master-next git://git.launchpad.net/~canonical-kernel/ubuntu/+source/linux-aws/+git/noble linux-aws/noble
 cd linux-aws/noble
 
 # apply lrng patches
@@ -39,17 +42,22 @@ sed -i '/^# ARCH: /s/amd64 arm64/amd64/; /^# FLAVOUR: /s/amd64-aws arm64-aws/amd
 
 # do the actual debain kerner build
 fakeroot debian/rules clean
+# TODO: figure out why it fails on the first run and try to fix it 
+fakeroot debian/rules defaultconfigs || true
+# update annotations - remove arm64 and import them
 fakeroot debian/rules defaultconfigs
 fakeroot debian/rules binary
 
+# install the kernel packages
 cd ..
-
 sudo dpkg -i linux*6.8.0*lrng1*.deb
 
 # grub defaults to enable lrng and AWS serial console
-sudo cp  ../../ubuntu-lrng-build/noble/etc/default/grub.d/50-cloudimg-settings.cfg /etc/default/grub.d/50-cloudimg-settings.cfg
+sudo cp  ../ubuntu-lrng-build/noble/etc/default/grub.d/50-cloudimg-settings.cfg /etc/default/grub.d/50-cloudimg-settings.cfg
 # set default grub menu
-sudo sed -i "s/GRUB_DEFAULT=0/GRUB_DEFAULT=\"1>$[`sudo cat /boot/grub/grub.cfg | grep 'Ubuntu,' | wc -l` - 2]\"/" /etc/default/grub
+# TODO: make it always work - this is not exactly reliable as the order depends on the kernel version
+# TODO: it should maybe grep it based on the kernel deb version
+sudo sed -i "s/GRUB_DEFAULT=0/GRUB_DEFAULT=\"1>0\"/" /etc/default/grub
 sudo update-grub
 
 # TODO: add clean up to minimize AMI size
