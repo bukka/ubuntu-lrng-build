@@ -15,7 +15,7 @@ sudo cp ubuntu-lrng-build/noble/etc/apt/sources.list.d/ubuntu-noble.sources /etc
 sudo apt update
 sudo apt upgrade -y
 
-sudo apt build-dep linux linux-image-unsigned-$(uname -r)
+sudo apt build-dep -y linux linux-image-unsigned-$(uname -r)
 
 sudo apt install -y linux-cloud-tools-common wireless-regdb libncurses-dev gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf llvm fakeroot
 
